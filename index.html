@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VoidTheSekai — Beta</title>
+<meta name="description" content="VoidTheSekai - Dunia bebas (beta)"/>
+
+<!-- ===== Inline CSS (simple, dark-first responsive) ===== -->
+<style>
+  :root{
+    --bg:#0b0b0d; --card:#111; --muted:#9aa; --accent:#7b5cff;
+    --glass: rgba(255,255,255,0.03);
+  }
+  html,body{height:100%;margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:#fff}
+  a{color:inherit}
+  .app{display:flex;min-height:100vh;gap:20px}
+  /* sidebar */
+  .sidebar{width:84px;background:linear-gradient(180deg,#07070a,transparent);padding:18px 8px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;align-items:center}
+  .icon-btn{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+  .icon-btn.active{outline:2px solid rgba(123,92,255,0.12)}
+  /* main column */
+  .main{flex:1;display:flex;flex-direction:column}
+  header.mainbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:linear-gradient(0deg,rgba(255,255,255,0.02),transparent)}
+  .brand{display:flex;gap:12px;align-items:center}
+  .brand h1{font-size:18px;margin:0}
+  .search{max-width:420px;flex:1;margin-left:20px}
+  .search input{width:100%;padding:8px 12px;border-radius:8px;border:0;background:#0f0f12;color:#fff}
+  .views{display:flex;gap:10px;align-items:center}
+  /* feed */
+  .container{display:flex;gap:20px;padding:20px}
+  .feed{flex:1;max-width:900px}
+  .card{background:var(--card);padding:14px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+  .card img, .card video{width:100%;border-radius:8px;max-height:540px;object-fit:cover}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .caption{margin:8px 0;font-size:15px;line-height:1.3}
+  .actions{display:flex;gap:10px;align-items:center}
+  .actions button{background:transparent;border:0;color:var(--muted);cursor:pointer}
+  .comments{margin-top:10px}
+  .comments input{width:100%;padding:8px;border-radius:8px;border:0;background:#0f0f12;color:#fff}
+  /* right column */
+  .rightcol{width:320px;padding:20px;box-sizing:border-box}
+  .panel{background:linear-gradient(180deg,#0e0e10,#0b0b0d);padding:12px;border-radius:10px;margin-bottom:12px}
+  /* small */
+  @media(max-width:900px){
+    .app{flex-direction:column}
+    .sidebar{flex-direction:row;width:100%;padding:8px;overflow:auto}
+    .rightcol{order:3;width:100%}
+    .container{flex-direction:column;padding:12px}
+    .feed{max-width:100%}
+  }
+  /* donation popup */
+  .donation-popup{position:fixed;right:18px;bottom:18px;background:linear-gradient(180deg,#17171b,#0f0f12);padding:12px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.5);z-index:9999}
+  .donation-popup button{background:var(--accent);border:0;padding:8px 12px;border-radius:8px;color:white;cursor:pointer}
+  /* AI chat bubble */
+  .ai-btn{position:fixed;right:18px;bottom:90px;background:#222;padding:10px;border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer}
+  .aibox{position:fixed;right:18px;bottom:156px;width:320px;background:#0d0d0f;border-radius:10px;padding:10px;display:none;z-index:9999}
+  .aibox header{font-weight:700;margin-bottom:8px}
+  .ai-resp{max-height:260px;overflow:auto;padding:6px;border-radius:6px;background:#07070a;margin-bottom:8px}
+  .small-muted{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- app -->
+<div class="app">
+
+  <!-- sidebar -->
+  <aside class="sidebar">
+    <div class="icon-btn" id="btn-feed" title="Feed" onclick="ui.show('feed')">🏠</div>
+    <div class="icon-btn" id="btn-film" title="Film" onclick="ui.show('film')">🎬</div>
+    <div class="icon-btn" id="btn-music" title="Music" onclick="ui.show('music')">🎵</div>
+    <div class="icon-btn" id="btn-upload" title="Upload" onclick="ui.show('upload')">⤴️</div>
+    <div class="icon-btn" id="btn-admin" title="Admin" onclick="ui.show('admin')">🛡️</div>
+  </aside>
+
+  <!-- main -->
+  <div class="main">
+    <header class="mainbar">
+      <div class="brand"><h1>VoidTheSekai</h1><div class="small-muted">Dunia Tanpa Aturan</div></div>
+      <div class="search"><input id="searchInput" placeholder="Cari postingan, judul film, lagu..." oninput="app.search(this.value)"/></div>
+      <div class="views">
+        <div id="auth-area"><button onclick="auth.signIn()">Login Google</button></div>
+      </div>
+    </header>
+
+    <div class="container">
+      <section class="feed" id="view-feed">
+        <!-- feed list injected here -->
+      </section>
+
+      <aside class="rightcol" id="view-side">
+        <div class="panel">
+          <h3>Now Playing</h3>
+          <div id="now-playing" class="small-muted">Tidak ada</div>
+        </div>
+
+        <div class="panel">
+          <h4>VoidTheSekai</h4>
+          <p class="small-muted">Wallpaper default akan muncul bagi yang belum ganti tema.</p>
+          <div style="margin-top:8px">
+            <button onclick="ui.resetWallpaper()">Reset Wallpaper</button>
+            <button onclick="ui.toggleTheme()">Toggle Theme</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>Owner Tools</h4>
+          <div id="owner-tools" class="small-muted">Login sebagai owner untuk melihat tools.</div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- film view (hidden by default) -->
+    <div id="view-film" style="display:none;padding:20px">
+      <div class="card">
+        <h2>VoidTheSekai Cinema</h2>
+        <div id="film-list"></div>
+      </div>
+    </div>
+
+    <!-- music view (hidden by default) -->
+    <div id="view-music" style="display:none;padding:20px">
+      <div class="card">
+        <h2>VoidTheSekai Music</h2>
+        <div id="music-list"></div>
+      </div>
+    </div>
+
+    <!-- upload view -->
+    <div id="view-upload" style="display:none;padding:20px">
+      <div class="card">
+        <h3>Upload Konten</h3>
+        <div>
+          <label>Jenis:</label>
+          <select id="upload-type"><option value="post">Post (gambar/teks)</option><option value="music">Music (mp3)</option><option value="film">Film (mp4)</option></select>
+        </div>
+        <div style="margin-top:8px"><input id="upload-title" placeholder="Judul"/></div>
+        <div style="margin-top:8px"><textarea id="upload-desc" placeholder="Deskripsi" rows="3" style="width:100%;"></textarea></div>
+        <div style="margin-top:8px"><input id="upload-file" type="file"/></div>
+        <div style="margin-top:8px"><button onclick="uploader.upload()">Upload</button></div>
+        <div id="upload-msg" class="small-muted" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- admin view -->
+    <div id="view-admin" style="display:none;padding:20px">
+      <div class="card">
+        <h3>Admin Panel</h3>
+        <div id="admin-tools-list" class="small-muted">Tools akan muncul di sini jika anda owner/admin.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- donation popup 1x/day -->
+<div id="donation" class="donation-popup" style="display:none">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="font-size:20px">🎁</div>
+    <div>
+      <div style="font-weight:700">Dukung VoidTheSekai</div>
+      <div class="small-muted">Web gratis & bebas — bantu pengembang</div>
+    </div>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+    <button onclick="donation.open()">Donate</button>
+    <button onclick="donation.close()">Nanti</button>
+  </div>
+</div>
+
+<!-- AI assistant -->
+<div class="ai-btn" onclick="voidAI.toggle()">🤖</div>
+<div class="aibox" id="ai-box">
+  <header>VoidAI</header>
+  <div class="ai-resp" id="ai-resp">Halo, saya VoidAI. Tanyakan apa saja.</div>
+  <input id="ai-input" placeholder="Tanya..." style="width:100%;padding:8px;border-radius:6px;border:0;background:#0b0b0d;color:#fff"/>
+  <div style="margin-top:8px"><button onclick="voidAI.ask()">Tanya</button></div>
+</div>
+
+<!-- ===== Inline JS (app logic) ===== -->
+<script>
+/*
+  VoidTheSekai front-end single file scaffold
+  - Replace Firebase config placeholder with your values
+  - Implement server endpoints for:
+    * Saweria webhook -> promote admin_temp safely (server-side verify)
+    * If using OpenAI, server proxy is recommended
+  - This file keeps logic client-side to let you test UI quickly
+*/
+
+/* ======= CONFIG: replace these placeholders ======= */
+const CONFIG = {
+  FIREBASE: {
+    apiKey: "YOUR_FIREBASE_APIKEY",
+    authDomain: "YOUR_FIREBASE_AUTHDOMAIN",
+    projectId: "YOUR_FIREBASE_PROJECTID",
+    storageBucket: "YOUR_FIREBASE_STORAGEBUCKET",
+    messagingSenderId: "YOUR_FIREBASE_MESSAGINGID",
+    appId: "YOUR_FIREBASE_APPID"
+  },
+  OWNER_UID: "OWNER_FIREBASE_UID",  // set owner uid after first user login
+  SAWERIA_DONATION_URL: "https://saweria.co/RyuuTheShadow", // donation url
+  SAWERIA_WEBHOOK_VERIFY_ENDPOINT: "https://your-server.example.com/saweria-webhook" // server-side endpoint to verify donasi
+};
+
+/* ========== Minimal UI state & helpers ========== */
+const ui = {
+  current: 'feed',
+  show(view){
+    // hide all main views
+    document.getElementById('view-feed').style.display = view==='feed' ? 'block' : 'none';
+    document.getElementById('view-film').style.display = view==='film' ? 'block' : 'none';
+    document.getElementById('view-music').style.display = view==='music' ? 'block' : 'none';
+    document.getElementById('view-upload').style.display = view==='upload' ? 'block' : 'none';
+    document.getElementById('view-admin').style.display = view==='admin' ? 'block' : 'none';
+    // active sidebar highlight
+    document.querySelectorAll('.icon-btn').forEach(b=>b.classList.remove('active'));
+    if(view==='feed') document.getElementById('btn-feed').classList.add('active');
+    if(view==='film') document.getElementById('btn-film').classList.add('active');
+    if(view==='music') document.getElementById('btn-music').classList.add('active');
+    if(view==='upload') document.getElementById('btn-upload').classList.add('active');
+    if(view==='admin') document.getElementById('btn-admin').classList.add('active');
+    this.current=view;
+  },
+  wallpaperDefault: "https://files.catbox.moe/ypsuz8.jpg",
+  resetWallpaper(){ document.body.style.background = ''; alert('Wallpaper reset (client-side only)') },
+  toggleTheme(){
+    const b=document.body;
+    if(b.dataset.theme==='light'){ b.dataset.theme='dark'; b.style.background='#0b0b0d'; b.style.color='#fff'; }
+    else { b.dataset.theme='light'; b.style.background='#fff'; b.style.color='#000'; }
+  }
+};
+
+/* ========== Donation popup (1x/day logic) ========== */
+const donation = {
+  shownKey: 'void_donation_last',
+  shouldShow(){
+    const t = localStorage.getItem(this.shownKey);
+    if(!t) return true;
+    const diff = Date.now() - parseInt(t,10);
+    return diff > 24*3600*1000;
+  },
+  open(){
+    // open Saweria link
+    window.open(CONFIG.SAWERIA_DONATION_URL,'_blank');
+    localStorage.setItem(this.shownKey, Date.now().toString());
+    document.getElementById('donation').style.display='none';
+  },
+  close(){
+    localStorage.setItem(this.shownKey, Date.now().toString());
+    document.getElementById('donation').style.display='none';
+  },
+  showIfNeeded(){
+    if(this.shouldShow()){
+      document.getElementById('donation').style.display='block';
+    }
+  }
+};
+
+/* ========== Simple client "database" (for demo) ==========
+   Replace with Firestore DB operations when ready.
+   Structure:
+   posts: [{id, uid, username, title, caption, type:'post|music|film', url, thumb, createdAt, nsfw}]
+*/
+let DB = {
+  posts: [],
+  users: {}, // uid -> {uid,displayName,role,age}
+};
+
+/* demo seed */
+DB.posts.push({
+  id:'p1', uid:'sys', username:'RyuuTempest', title:'Welcome', caption:'Dunia ini bebas... kecuali gua.',
+  type:'post', url:ui.wallpaperDefault, thumb:ui.wallpaperDefault, createdAt:Date.now(), nsfw:false, likes:0, saves:0
+});
+
+/* ========== Render feed ========== */
+function renderFeed(){
+  const feed = document.getElementById('view-feed');
+  feed.innerHTML = '';
+  DB.posts.slice().reverse().forEach(p=>{
+    const card = document.createElement('div'); card.className='card';
+    card.innerHTML = `
+      <div class="meta"><strong>@${p.username}</strong><span class="small-muted">${new Date(p.createdAt).toLocaleString()}</span></div>
+      <div class="caption">${escapeHtml(p.caption||p.title||'')}</div>
+      ${p.type==='post'? `<img src="${p.url}" alt="img"/>` : p.type==='music'? `<div><strong>${p.title}</strong><audio controls src="${p.url}"></audio></div>` : `<div><strong>${p.title}</strong><video controls src="${p.url}"></video></div>`}
+      <div class="actions">
+        <button onclick="app.like('${p.id}')">❤️ ${p.likes||0}</button>
+        <button onclick="app.save('${p.id}')">💾</button>
+        <button onclick="app.share('${p.id}')">🔗</button>
+      </div>
+      <div class="comments"><h4>Komentar</h4>
+        <div id="c-${p.id}" class="comment-list"></div>
+        <input placeholder="Tulis komentar..." onkeydown="if(event.key==='Enter') app.comment('${p.id}',this.value)"/>
+      </div>
+    `;
+    feed.appendChild(card);
+    renderComments(p.id);
+  });
+}
+
+/* comments (in-memory demo) */
+let COMMENTS = {}; // postId -> [{by,msg,at}]
+function renderComments(postId){
+  const node = document.getElementById('c-'+postId);
+  if(!node) return;
+  node.innerHTML = (COMMENTS[postId]||[]).map(c=>`<div><strong>${escapeHtml(c.by)}:</strong> ${escapeHtml(c.msg)}</div>`).join('');
+}
+
+/* ========== Simple uploader (client-only) ========= */
+const uploader = {
+  async upload(){
+    const fileEl = document.getElementById('upload-file');
+    if(!fileEl.files || !fileEl.files[0]) return alert('Pilih file dulu');
+    const f = fileEl.files[0];
+    const type = document.getElementById('upload-type').value;
+    const title = document.getElementById('upload-title').value || f.name;
+    const desc = document.getElementById('upload-desc').value || '';
+    // quick local-file url (for demo only) - in real app upload to Firebase Storage and get downloadURL
+    const url = URL.createObjectURL(f);
+    const p = {
+      id: 'local-'+Date.now(),
+      uid: app.user ? app.user.uid : 'anon',
+      username: app.user ? app.user.displayName || 'anon' : 'anon',
+      title, caption:desc, type: type==='post' ? 'post': (type==='music'?'music':'film'),
+      url, thumb: url, createdAt: Date.now(), likes:0, saves:0
+    };
+    DB.posts.push(p);
+    renderFeed();
+    document.getElementById('upload-msg').innerText='Upload (demo) berhasil! File hanya disimpan sementara di browser.';
+    // In real app: upload to Firebase Storage then create Firestore doc with metadata
+  }
+};
+
+/* ========== App actions (like/save/share/comment) ========== */
+const app = {
+  user:null,
+  search(q){
+    q=q.trim().toLowerCase();
+    // simple search demo: filter posts (client)
+    if(!q){ renderFeed(); return; }
+    const filtered = DB.posts.filter(p=> (p.title||'').toLowerCase().includes(q) || (p.caption||'').toLowerCase().includes(q));
+    const feed = document.getElementById('view-feed'); feed.innerHTML='';
+    filtered.slice().reverse().forEach(p=>{
+      const card = document.createElement('div'); card.className='card';
+      card.innerHTML = `<div class="meta"><strong>@${p.username}</strong></div><div class="caption">${escapeHtml(p.caption||p.title)}</div>${p.type==='post'? `<img src="${p.url}"/>` : p.type==='music'? `<audio controls src="${p.url}"></audio>`: `<video controls src="${p.url}"></video>`}`;
+      feed.appendChild(card);
+    });
+  },
+  like(id){ const post = DB.posts.find(x=>x.id===id); if(post){ post.likes = (post.likes||0)+1; renderFeed(); } },
+  save(id){ alert('Disimpan ke koleksi (demo)'); },
+  share(id){ prompt('Copy link demo (client):', location.href + '#post-'+id); },
+  comment(postId, text){ if(!text) return; COMMENTS[postId]=COMMENTS[postId]||[]; COMMENTS[postId].push({by: this.user?this.user.displayName||'anon':'anon',msg:text,at:Date.now()}); renderComments(postId); },
+};
+
+/* ========== Auth (Firebase placeholders) ========= */
+const auth = {
+  async init(){
+    // optionally initialize firebase here with CONFIG.FIREBASE
+    if(window.firebase){ // if you included firebase SDK externally
+      firebase.initializeApp(CONFIG.FIREBASE);
+      firebase.auth().onAuthStateChanged(u=>{
+        if(u) auth.onSignIn(u);
+        else uiAuthShow(false);
+      });
+    } else {
+      uiAuthShow(false);
+    }
+  },
+  signIn(){
+    // Demo sign in prompt for local testing:
+    const name = prompt('Masukkan nama (demo login):','RyuuTempest');
+    const age = parseInt(prompt('Masukkan umur (demo):','25')||'0',10);
+    if(!name) return;
+    // create demo user
+    const uid = 'demo-'+Math.random().toString(36).slice(2,9);
+    const user = { uid, displayName: name, age };
+    app.user = user;
+    // if first login and you want to set owner:
+    if(!localStorage.getItem('owner-set')) {
+      // optionally set owner uid by storing it (in real app, Owner set via backend)
+      localStorage.setItem('owner-uid', uid);
+      // localStorage.setItem('owner-set','1');
+    }
+    uiAuthShow(true,user);
+    renderFeed();
+    donation.showIfNeeded();
+    // if user is owner show tools
+    if(localStorage.getItem('owner-uid')===uid) {
+      document.getElementById('owner-tools').innerHTML = `<div>Anda Owner — tools aktif</div><button onclick="adminTools.createAdmin('demo-admin')">Tambah Admin</button>`;
+    }
+  },
+  onSignIn(u){
+    // real firebase sign-in handler (if using firebase)
+    app.user = { uid:u.uid, displayName: u.displayName || u.email, age: null };
+    uiAuthShow(true, app.user);
+  },
+  signOut(){ app.user=null; uiAuthShow(false); }
+};
+
+function uiAuthShow(signed, user){
+  const a = document.getElementById('auth-area');
+  if(signed){
+    a.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><div class="small-muted">Hi, ${escapeHtml(user.displayName||'anon')}</div><button onclick="auth.signOut()">Logout</button></div>`;
+  } else {
+    a.innerHTML = `<button onclick="auth.signIn()">Login Google</button>`;
+  }
+}
+
+/* ========== Admin tools demo (owner control) ========== */
+const adminTools = {
+  createAdmin(username){
+    alert('Admin created: '+username+' (demo)');
+    // in real app: set role in Firestore: users/{uid}.role='admin'
+  },
+  listAdmins(){ /* fetch from DB in real app */ }
+};
+
+/* ========== VoidAI (offline-light, editable persona) ========== */
+const voidAI = {
+  open:false,
+  toggle(){ const box=document.getElementById('ai-box'); box.style.display = box.style.display==='block'?'none':'block'; },
+  ask(){
+    const q = document.getElementById('ai-input').value.toLowerCase().trim();
+    const resp = document.getElementById('ai-resp');
+    if(!q) { resp.innerText='Tulis pertanyaan dulu.'; return; }
+    // custom answer mapping
+    if(q.includes('siapa') && q.includes('tercantik')|| q.includes('tertampan') || q.includes('terpintar')) {
+      resp.innerText = "RyuuTempest sang penguasa 🔥";
+    } else if(q.includes('ryuu') || q.includes('ryuutempest') || q.includes('ryuu')) {
+      resp.innerText = "ShadowKing Anonymous — identitas legendaris VoidTheSekai.";
+    } else if(q.includes('web') && q.includes('keren')) {
+      resp.innerText = "VoidTheSekai. Dibuat untuk jiwa yang tersisih.";
+    } else {
+      const rand = ["Void is home.","Di sini bebas.","Tanyakan soal film, musik, atau fitur Void."];
+      resp.innerText = rand[Math.floor(Math.random()*rand.length)];
+    }
+  }
+};
+
+/* ========== Utilities ========== */
+function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+/* ========== Simple demo film/music list rendering ========== */
+function renderMediaLists(){
+  const filmList = document.getElementById('film-li
