@@ -1,3 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login Supabase VoidTheSekai</title>
+</head>
+<body>
+  <h2>Register</h2>
+  <input type="email" id="regEmail" placeholder="Email">
+  <input type="password" id="regPassword" placeholder="Password">
+  <button onclick="register()">Daftar</button>
+
+  <h2>Login</h2>
+  <input type="email" id="logEmail" placeholder="Email">
+  <input type="password" id="logPassword" placeholder="Password">
+  <button onclick="login()">Masuk</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = "https://cnddisszypihglfisvwl.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuZGRpc3N6eXBpaGdsZmlzdndsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MTE5MzMsImV4cCI6MjA3MDI4NzkzM30.GFItCIU3Aml75srJdnCddOaE3JRkcOh0v0m9MNHEy24";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function register() {
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      let { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        alert("Pendaftaran berhasil! Cek email untuk verifikasi.");
+      }
+    }
+
+    async function login() {
+      const email = document.getElementById('logEmail').value;
+      const password = document.getElementById('logPassword').value;
+
+      let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        alert("Login berhasil!");
+        console.log(data.user);
+      }
+    }
+  </script>
+</body>
+</html>
 <!doctype html>
 <html lang="id">
 <head>
